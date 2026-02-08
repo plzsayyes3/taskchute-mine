@@ -1,0 +1,15 @@
+{
+  "name": "obsidian-taskchute-mine",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=es2018 --outfile=main.js --external:obsidian --external:@codemirror/state --external:@codemirror/view --external:@codemirror/language --sourcemap --log-level=info",
+    "dev": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=es2018 --outfile=main.js --external:obsidian --external:@codemirror/state --external:@codemirror/view --external:@codemirror/language --sourcemap --log-level=info --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "esbuild": "^0.25.0",
+    "obsidian": "^1.5.8",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {}
+}

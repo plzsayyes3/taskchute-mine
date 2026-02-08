@@ -1,0 +1,10 @@
+{
+  "id": "obsidian-taskchute-mine",
+  "name": "TaskChute Mine",
+  "version": "0.0.1",
+  "minAppVersion": "1.5.0",
+  "description": "Personal interpretation of TaskChute for Obsidian.",
+  "author": "shu",
+  "authorUrl": "",
+  "isDesktopOnly": false
+}
