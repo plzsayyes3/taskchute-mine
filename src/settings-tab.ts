@@ -9,10 +9,14 @@ interface TaskLinerSettingsHost {
     updateTopBar(): void | Promise<void>;
 }
 
-class FolderSuggest extends obsidian.AbstractInputSuggest {
+class FolderSuggest extends obsidian.AbstractInputSuggest<any> {
+    app: any;
+    textInputEl: HTMLInputElement;
+
     constructor(app, textInputEl) {
         super(app, textInputEl);
         this.app = app;
+        this.textInputEl = textInputEl;
     }
 
     getSuggestions(query) {
@@ -40,10 +44,14 @@ class FolderSuggest extends obsidian.AbstractInputSuggest {
     }
 }
 
-class FileSuggest extends obsidian.AbstractInputSuggest {
+class FileSuggest extends obsidian.AbstractInputSuggest<any> {
+    app: any;
+    textInputEl: HTMLInputElement;
+
     constructor(app, textInputEl) {
         super(app, textInputEl);
         this.app = app;
+        this.textInputEl = textInputEl;
     }
 
     getSuggestions(query) {
@@ -71,10 +79,14 @@ class FileSuggest extends obsidian.AbstractInputSuggest {
     }
 }
 
-class IconSuggest extends obsidian.AbstractInputSuggest {
+class IconSuggest extends obsidian.AbstractInputSuggest<any> {
+    app: any;
+    textInputEl: HTMLInputElement;
+
     constructor(app, textInputEl) {
         super(app, textInputEl);
         this.app = app;
+        this.textInputEl = textInputEl;
     }
 
     getSuggestions(query) {
@@ -102,10 +114,14 @@ class IconSuggest extends obsidian.AbstractInputSuggest {
     }
 }
 
-class CommandSuggest extends obsidian.AbstractInputSuggest {
+class CommandSuggest extends obsidian.AbstractInputSuggest<any> {
+    app: any;
+    textInputEl: HTMLInputElement;
+
     constructor(app, textInputEl) {
         super(app, textInputEl);
         this.app = app;
+        this.textInputEl = textInputEl;
     }
 
     getSuggestions(query) {
@@ -135,6 +151,8 @@ class CommandSuggest extends obsidian.AbstractInputSuggest {
 }
 
 export class TaskChuteLineSettingTab extends PluginSettingTab {
+    plugin: TaskLinerSettingsHost & obsidian.Plugin;
+
     constructor(app, plugin) {
         super(app, plugin);
         this.plugin = plugin;

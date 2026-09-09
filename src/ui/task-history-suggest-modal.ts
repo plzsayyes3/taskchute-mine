@@ -1,6 +1,10 @@
 import * as obsidian from 'obsidian';
 
-export class TaskHistorySuggestModal extends obsidian.FuzzySuggestModal {
+export class TaskHistorySuggestModal extends obsidian.FuzzySuggestModal<any> {
+    entries: any[];
+    onSubmit: (item: any) => void;
+    submitted: boolean;
+
     constructor(app, entries, onSubmit) {
         super(app);
         this.entries = entries;
