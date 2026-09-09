@@ -1,15 +1,15 @@
 export interface TaskLinerUiRuntimeDeps {
-    TaskChuteCalendarView: any;
-    TaskChuteScrollView: any;
+    createCalendarView: (leaf: any) => any;
+    createScrollView: (leaf: any) => any;
     buildDashboardPanelExtension: (plugin: any) => any;
 }
 
 export function registerTaskLinerUiRuntime(this: any, deps: TaskLinerUiRuntimeDeps) {
-    const { TaskChuteCalendarView, TaskChuteScrollView, buildDashboardPanelExtension } = deps;
+    const { createCalendarView, createScrollView, buildDashboardPanelExtension } = deps;
 
     this.registerView(
         'taskliner-calendar-view',
-        (leaf) => new TaskChuteCalendarView(leaf, this)
+        (leaf) => createCalendarView(leaf)
     );
 
     this.addCommand({
@@ -30,7 +30,7 @@ export function registerTaskLinerUiRuntime(this: any, deps: TaskLinerUiRuntimeDe
 
     this.registerView(
         'taskliner-scroll-view',
-        (leaf) => new TaskChuteScrollView(leaf, this)
+        (leaf) => createScrollView(leaf)
     );
 
     this.addCommand({
