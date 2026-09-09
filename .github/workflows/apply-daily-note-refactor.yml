@@ -1,0 +1,50 @@
+name: Apply daily note service refactor
+
+on:
+  push:
+    branches:
+      - refactor/daily-note-service
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/daily-note-service
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply guarded daily note extraction
+        run: python scripts/extract_daily_note_service.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TaskLine regression tests
+        run: npm run test:task-line
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Clean temporary refactor files
+        run: rm -f scripts/extract_daily_note_service.py .github/workflows/apply-daily-note-refactor.yml
+
+      - name: Commit daily note service refactor
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No daily-note changes to commit"
+            exit 0
+          fi
+          git commit -m "Extract daily note navigation service"
+          git push origin HEAD:refactor/daily-note-service
