@@ -1,0 +1,36 @@
+name: Verify TaskLiner production build
+
+on:
+  push:
+    branches:
+      - taskliner-migration
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify production artifact
+        shell: bash
+        run: |
+          expected="1845cebc52313c2217d3f703af4029c51959c456"
+          actual="$(git hash-object main.js)"
+          echo "expected=$expected"
+          echo "actual=$actual"
+          if [ "$actual" != "$expected" ]; then
+            echo "Production build does not match the currently deployed TaskLiner artifact."
+            exit 1
+          fi
+          echo "Production build matches the deployed TaskLiner artifact."
