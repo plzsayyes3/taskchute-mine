@@ -1,0 +1,43 @@
+name: Apply recovered Calendar and Scroll views
+
+on:
+  push:
+    branches:
+      - fix/restore-calendar-scroll-views
+
+permissions:
+  contents: write
+
+jobs:
+  restore:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/restore-calendar-scroll-views
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply recovered view wiring
+        run: python scripts/apply_recovered_views.py
+      - name: Install dependencies
+        run: npm install
+      - name: Regression tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build plugin
+        run: npm run build
+      - name: Clean temporary recovery files
+        run: |
+          rm -f scripts/apply_recovered_views.py
+          rm -f scripts/recovered-view-styles.css
+          rm -f .github/workflows/apply-recovered-views.yml
+      - name: Commit recovered views
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Restore Calendar and Scroll views from historical TaskChute" || exit 0
+          git push
