@@ -20,13 +20,3 @@ marker = 'Calendar View — recovered from catch-all-notebook 2026-03-27'
 if marker not in styles:
     styles = styles.rstrip() + '\n\n' + recovered.strip() + '\n'
 styles_path.write_text(styles)
-
-ci_path = Path('.github/workflows/ci.yml')
-ci = ci_path.read_text()
-typecheck_step = "      - name: Typecheck\n        run: npm run typecheck\n\n"
-if 'name: Typecheck' not in ci:
-    build_anchor = "      - name: Build plugin\n        run: npm run build\n"
-    if build_anchor not in ci:
-        raise SystemExit('CI build anchor not found')
-    ci = ci.replace(build_anchor, typecheck_step + build_anchor, 1)
-ci_path.write_text(ci)
