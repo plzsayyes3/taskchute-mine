@@ -15,12 +15,14 @@ module = "import { Notice } from 'obsidian';\nimport { adjustTaskLineTime } from
 Path('src/commands').mkdir(parents=True, exist_ok=True)
 Path('src/commands/register-commands.ts').write_text(module)
 
+# Replace the command block before adding imports so character offsets stay valid.
+replacement = "        registerTaskLinerCommands.call(this);\n"
+text = text[:start] + replacement + text[end:]
+
 import_anchor = "import { HistorySuggestController } from './services/history-suggest-controller';\n"
-if "registerTaskLinerCommands" not in text:
+if "import { registerTaskLinerCommands } from './commands/register-commands';" not in text:
     if import_anchor not in text:
         raise SystemExit('command registration import anchor missing')
     text = text.replace(import_anchor, import_anchor + "import { registerTaskLinerCommands } from './commands/register-commands';\n", 1)
 
-replacement = "        registerTaskLinerCommands.call(this);\n"
-text = text[:start] + replacement + text[end:]
 main_path.write_text(text)
