@@ -38,7 +38,7 @@ Production bundle:
 npm run build
 ```
 
-`npm run build` intentionally uses esbuild directly. The recovered source predates current Obsidian TypeScript definitions and uses APIs that are not fully represented by the latest public typings. Type checking is therefore kept separate from the release build:
+`main.js` is generated and is not tracked in Git. `npm run build` intentionally uses esbuild directly. The recovered source predates current Obsidian TypeScript definitions and uses APIs that are not fully represented by the latest public typings. Type checking is therefore kept separate from the release build:
 
 ```sh
 npm run typecheck
@@ -58,7 +58,7 @@ GitHub Releases are the distribution source. A tag such as `v0.1.1` triggers the
    - `manifest.json`
    - `styles.css`
 
-Runtime settings (`data.json`) are vault-specific and are not distributed.
+Runtime settings (`data.json`) are vault-specific and are not distributed or tracked.
 
 After the repository is renamed, the BRAT repository target is:
 
@@ -66,6 +66,6 @@ After the repository is renamed, the BRAT repository target is:
 
 ## Migration status
 
-The behavior-preserving source recovery and production build parity are complete. Repository rename, migration-branch merge, first release, and BRAT switchover remain before the old development location can be retired.
+The behavior-preserving source recovery, production build parity, repository cleanup, and release automation are complete. Repository rename, migration-branch merge, first release, and BRAT switchover remain before the old development location can be retired.
 
 See `MIGRATION.md` for the detailed migration record and later refactoring targets.
