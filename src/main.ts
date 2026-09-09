@@ -20,6 +20,9 @@ import { ViewPlugin, Decoration, showPanel, EditorView } from '@codemirror/view'
 import { RangeSetBuilder, StateField, StateEffect } from '@codemirror/state';
 
 class TaskTextModal extends Modal {
+    onSubmit: (taskText: string) => void;
+    taskText: string;
+
     constructor(app, onSubmit) {
         super(app);
         this.onSubmit = onSubmit;
@@ -75,6 +78,9 @@ class TaskTextModal extends Modal {
 }
 
 class DatePickerModal extends Modal {
+    initialDate: Date;
+    onChoose: (date: Date) => void | Promise<void>;
+
     constructor(app, initialDate, onChoose) {
         super(app);
         this.initialDate = initialDate || new Date();
@@ -508,6 +514,7 @@ class TaskLinerPlugin extends Plugin {
 
                 // Add task to Daily Note
                 content += `- [ ] ${taskName}\n`;
+                if (!(dailyFile instanceof TFile)) return;
                 await this.app.vault.modify(dailyFile, content);
                 new Notice(`${dateStr} に先送りしました`);
             } catch (err) {
@@ -619,7 +626,7 @@ class TaskLinerPlugin extends Plugin {
         const yesterdayFilePath = `${folderPath}/${yesterdayStr}.md`;
 
         const yesterdayFile = this.app.vault.getAbstractFileByPath(yesterdayFilePath);
-        if (!yesterdayFile) {
+        if (!(yesterdayFile instanceof TFile)) {
             new Notice(`昨日のファイルが見つかりません (${yesterdayFilePath})`);
             return;
         }
@@ -759,7 +766,7 @@ class TaskLinerPlugin extends Plugin {
         }
         new Notice(`ステップ3: ${candidates.length}個の選択肢を表示します`);
 
-        const selected = await new Promise((resolve) => {
+        const selected = await new Promise<any[] | null>((resolve) => {
             const modal = new TemplateSelectModal(this.app, candidates, resolve);
             modal.open();
         });
@@ -1136,6 +1143,9 @@ class TaskLinerPlugin extends Plugin {
 }
 
 class TimePunchModal extends Modal {
+    onSubmit: (timeStr: string) => void;
+    timeStr: string = '';
+
 	constructor(app, onSubmit) {
 		super(app);
 		this.onSubmit = onSubmit;
@@ -1360,6 +1370,8 @@ class RollRepeatModal extends Modal {
 
 
 const taskChuteStylePlugin = ViewPlugin.fromClass(class {
+    decorations: any;
+
     constructor(view) {
         this.decorations = this.buildDecorations(view);
     }
