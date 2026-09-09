@@ -40,17 +40,17 @@ The historical source and build configuration have now been restored exactly. Gi
 - [x] Separate the release build from legacy TypeScript type checking. `npm run build` uses esbuild; `npm run typecheck` is diagnostic only during typing modernization.
 - [x] Add `versions.json` for Obsidian compatibility metadata.
 - [x] Add a GitHub Release workflow that publishes `main.js`, `manifest.json`, and `styles.css` from a matching `v*` tag.
-- [x] Keep `data.json` outside release artifacts.
+- [x] Keep `data.json` outside release artifacts and ignore it.
+- [x] Remove tracked `node_modules`, generated source maps, runtime `data.json`, and the stale checked-in `main.js`. Release bundles are now generated from canonical source.
 
 ## Remaining migration work
 
-1. Confirm and remove any tracked `node_modules` or generated source maps left from the old repository.
-2. Merge `taskliner-migration` into `main` after CI is green.
-3. Rename GitHub repository `taskchute-mine` to `taskliner`.
-4. Publish the first release with a tag matching `manifest.json` (`v0.1.1` for the migration baseline, unless the version is deliberately advanced first).
-5. Add `plzsayyes3/taskliner` to BRAT and verify installation/update on the actual vault.
-6. Retire the old development copy only after BRAT is confirmed working.
-7. Refactor the monolithic source only after the independent repository is proven in real use.
+1. Merge `taskliner-migration` into `main` after CI is green.
+2. Rename GitHub repository `taskchute-mine` to `taskliner`.
+3. Publish the first release with a tag matching `manifest.json` (`v0.1.1` for the migration baseline, unless the version is deliberately advanced first).
+4. Add `plzsayyes3/taskliner` to BRAT and verify installation/update on the actual vault.
+5. Retire the old development copy only after BRAT is confirmed working.
+6. Refactor the monolithic source only after the independent repository is proven in real use.
 
 ## Refactoring targets after migration
 
