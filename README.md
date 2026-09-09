@@ -1,31 +1,48 @@
-# TaskChute Mine (Obsidian plugin)
+# TaskLiner
 
-## Build
+TaskLiner is a personal Obsidian task-management plugin derived from the earlier `taskchute-mine` implementation.
 
-```sh
-npm install
-npm run build
-```
+## Canonical source
 
-## Dev
+This repository is being migrated to become the single source of truth for TaskLiner.
+
+The current production build is the TaskLiner plugin used in `plzsayyes3/mynotebook` at:
+
+`.obsidian-job/plugins/taskliner/`
+
+The plugin ID is `taskliner`.
+
+## Development
 
 ```sh
 npm install
 npm run dev
 ```
 
-## Install (manual)
+Production build:
 
-Copy these files into:
-`.obsidian/plugins/obsidian-taskchute-mine/`
+```sh
+npm run build
+```
 
-## 配布物
+## Distribution
 
-`.obsidian/plugins/obsidian-taskchute-mine/` に置くのは次の3つのみ:
+The repository root should contain the BRAT/release artifacts:
 
 - `main.js`
 - `manifest.json`
 - `styles.css`
 
-Enable the plugin in Obsidian. A Notice will appear: `TaskChute Mine loaded`.
-The command `TaskChute Mine: Hello` will show `Hello from Mine`.
+Runtime settings (`data.json`) are vault-specific and must not be distributed as part of the plugin release.
+
+## BRAT target
+
+After the repository rename, use:
+
+`plzsayyes3/taskliner`
+
+BRAT currently installs beta plugins from GitHub releases. Each release must contain `manifest.json` and `main.js`; `styles.css` is included when the plugin uses it.
+
+## Migration status
+
+See `MIGRATION.md`.
