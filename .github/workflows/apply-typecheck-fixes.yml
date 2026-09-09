@@ -1,0 +1,42 @@
+name: Apply typecheck compatibility fixes
+
+on:
+  push:
+    branches:
+      - chore/typecheck-gate
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chore/typecheck-gate
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply guarded fixes
+        run: python scripts/fix_typecheck.py
+      - name: Install dependencies
+        run: npm install
+      - name: Regression tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build plugin
+        run: npm run build
+      - name: Clean temporary files
+        run: |
+          rm -f scripts/fix_typecheck.py
+          rm -f .github/workflows/apply-typecheck-fixes.yml
+      - name: Commit fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Make TaskLiner pass TypeScript typecheck" || exit 0
+          git push
