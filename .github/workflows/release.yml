@@ -3,7 +3,7 @@ name: Release TaskLiner
 on:
   push:
     tags:
-      - "v*"
+      - "*"
 
 permissions:
   contents: write
@@ -27,11 +27,10 @@ jobs:
       - name: Verify tag matches manifest version
         shell: bash
         run: |
-          tag_version="${GITHUB_REF_NAME#v}"
           manifest_version="$(node -p "require('./manifest.json').version")"
-          echo "tag=$tag_version"
+          echo "tag=$GITHUB_REF_NAME"
           echo "manifest=$manifest_version"
-          test "$tag_version" = "$manifest_version"
+          test "$GITHUB_REF_NAME" = "$manifest_version"
 
       - name: Publish release assets
         env:
