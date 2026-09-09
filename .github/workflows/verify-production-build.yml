@@ -16,28 +16,20 @@ jobs:
         with:
           node-version: 20
 
-      - name: Test access to historical source
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          set -e
-          url="https://api.github.com/repos/plzsayyes3/catch-all-notebook/contents/taskliner/src/main.ts?ref=bcb6a611c9612eb856ea0c1d92854d5a6b2d11aa"
-          status="$(curl -sS -o /tmp/source.json -w '%{http_code}' \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github+json" \
-            "$url")"
-          echo "cross_repo_http_status=$status"
-          if [ "$status" = "200" ]; then
-            jq -r '.content' /tmp/source.json | base64 -d > /tmp/recovered-main.ts
-            echo "recovered_source_blob=$(git hash-object /tmp/recovered-main.ts)"
-          fi
-
       - name: Install dependencies
         run: npm install
 
-      - name: Build
-        run: npm run build
+      - name: Bundle with historical build config
+        run: node esbuild.config.mjs production
+
+      - name: Verify canonical source blob
+        shell: bash
+        run: |
+          expected="97f9ec3d667f7cf8d12a8a92c4d6c33418e1f502"
+          actual="$(git hash-object src/main.ts)"
+          echo "expected=$expected"
+          echo "actual=$actual"
+          test "$actual" = "$expected"
 
       - name: Verify production artifact
         shell: bash
