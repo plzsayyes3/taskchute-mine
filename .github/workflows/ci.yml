@@ -19,8 +19,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: TaskLine regression tests
-        run: npm run test:task-line
+      - name: Regression tests
+        run: npm test
 
       - name: Build plugin
         run: npm run build

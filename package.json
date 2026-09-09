@@ -7,7 +7,9 @@
     "dev": "node esbuild.config.mjs",
     "build": "node esbuild.config.mjs production",
     "typecheck": "tsc --noEmit --skipLibCheck",
-    "test:task-line": "rm -rf .test-dist && esbuild src/core/task-line.ts --bundle --platform=node --format=cjs --outfile=.test-dist/task-line.cjs && node tests/task-line.test.cjs && rm -rf .test-dist"
+    "test:task-line": "rm -rf .test-dist && esbuild src/core/task-line.ts --bundle --platform=node --format=cjs --outfile=.test-dist/task-line.cjs && node tests/task-line.test.cjs && rm -rf .test-dist",
+    "test:techo": "rm -rf .test-dist && esbuild src/core/techo.ts --bundle --platform=node --format=cjs --outfile=.test-dist/techo.cjs && node tests/techo.test.cjs && rm -rf .test-dist",
+    "test": "npm run test:task-line && npm run test:techo"
   },
   "keywords": [],
   "author": "Matsuyama",

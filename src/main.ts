@@ -2,6 +2,7 @@ import { TaskLine, normalizeTimeStr, setLineKeepScroll, adjustTaskLineTime } fro
 import { DEFAULT_SETTINGS, TaskLinerSettings } from './settings';
 import { TaskChuteLineSettingTab } from './settings-tab';
 import { DailyNoteService } from './services/daily-note';
+import { TechoService } from './services/techo';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
@@ -121,6 +122,7 @@ class DatePickerModal extends Modal {
 class TaskLinerPlugin extends Plugin {
     settings: TaskLinerSettings;
     dailyNoteService: DailyNoteService;
+    techoService: TechoService;
     statusBarEl: HTMLElement;
     topBarEl: HTMLElement;
     topBarLine1El: HTMLElement;
@@ -138,6 +140,7 @@ class TaskLinerPlugin extends Plugin {
 	async onload() {
         await this.loadSettings();
         this.dailyNoteService = new DailyNoteService(this.app, () => this.settings);
+        this.techoService = new TechoService(this.app, () => this.settings);
         this.addSettingTab(new TaskChuteLineSettingTab(this.app, this));
 
         try {
@@ -1636,134 +1639,23 @@ class TaskLinerPlugin extends Plugin {
     }
 
     getTargetDate() {
-        const activeFile = this.app.workspace.getActiveFile();
-        if (activeFile) {
-            const dateMatch = activeFile.basename.match(/^\d{4}-\d{2}-\d{2}$/);
-            if (dateMatch) {
-                return activeFile.basename;
-            }
-        }
-        return moment().format('YYYY-MM-DD');
+        return this.techoService.getTargetDate();
     }
 
     normalizeTechoHeader(header) {
-        const trimmed = String(header || "").trim();
-        if (!trimmed) return "## techoからインポート";
-        if (/^#{1,6}\s+/.test(trimmed)) return trimmed;
-        return `## ${trimmed}`;
+        return this.techoService.normalizeTechoHeader(header);
     }
 
     extractTechoItemsForDate(content, dateStr) {
-        if (!content || !dateStr) return [];
-        const parts = dateStr.split('-');
-        if (parts.length !== 3) return [];
-        const monthNum = parseInt(parts[1], 10);
-        const dayNum = parseInt(parts[2], 10);
-        // Supports both "03月17日" and "3月17日"
-        const headerRe = new RegExp(`^##\\s*0?${monthNum}月0?${dayNum}日(?:\\([^)]*\\))?\\s*$`);
-        const lines = String(content).split(/\r?\n/);
-        let start = -1;
-        for (let i = 0; i < lines.length; i++) {
-            if (headerRe.test(lines[i].trim())) {
-                start = i;
-                break;
-            }
-        }
-        if (start === -1) return [];
-
-        let end = lines.length;
-        for (let i = start + 1; i < lines.length; i++) {
-            if (/^##\s+/.test(lines[i].trim())) {
-                end = i;
-                break;
-            }
-        }
-
-        const items = [];
-        for (let i = start + 1; i < end; i++) {
-            const trimmed = String(lines[i] || "").trim();
-            if (!trimmed) continue;
-            if (/^#{1,6}\s+/.test(trimmed)) continue;
-            items.push(trimmed);
-        }
-        return items;
+        return this.techoService.extractTechoItemsForDate(content, dateStr);
     }
 
     applyTechoImportToLog(content, header, items, mode) {
-        const lines = String(content || "").split(/\r?\n/);
-        let headerIndex = -1;
-        for (let i = 0; i < lines.length; i++) {
-            if (lines[i].trim() === header) {
-                headerIndex = i;
-                break;
-            }
-        }
-
-        if (headerIndex === -1) {
-            // Header not found, append to end
-            const nextLines = [...lines];
-            if (nextLines.length > 0 && nextLines[nextLines.length - 1].trim() !== "") {
-                nextLines.push("");
-            }
-            nextLines.push(header, ...items);
-            return { content: nextLines.join("\n"), addedCount: items.length };
-        }
-
-        let blockEnd = lines.length;
-        for (let i = headerIndex + 1; i < lines.length; i++) {
-            if (/^#{1,6}\s+/.test(lines[i].trim())) {
-                blockEnd = i;
-                break;
-            }
-        }
-
-        if (mode === 'replace') {
-            const replaced = [...lines.slice(0, headerIndex + 1), ...items, ...lines.slice(blockEnd)];
-            return { content: replaced.join("\n"), addedCount: items.length };
-        } else {
-            // Append mode: only add items that don't already exist in this block
-            const existing = new Set();
-            for (let i = headerIndex + 1; i < blockEnd; i++) {
-                existing.add(lines[i].trim());
-            }
-            const toAppend = items.filter(item => !existing.has(item.trim()));
-            const appended = [...lines.slice(0, blockEnd), ...toAppend, ...lines.slice(blockEnd)];
-            return { content: appended.join("\n"), addedCount: toAppend.length };
-        }
+        return this.techoService.applyTechoImportToLog(content, header, items, mode);
     }
 
     async importTechoToday(editor) {
-        const targetDate = this.getTargetDate();
-        const techoFolder = this.settings.techoFolderPath || DEFAULT_SETTINGS.techoFolderPath;
-        const monthFileName = `${targetDate.slice(0, 7)}.md`;
-        const techoFilePath = `${techoFolder}/${monthFileName}`;
-        
-        const techoFile = this.app.vault.getAbstractFileByPath(techoFilePath);
-        if (!techoFile) {
-            new Notice(`Techo月別ファイルが見つかりません (${techoFilePath})`);
-            return;
-        }
-
-        const techoContent = await this.app.vault.read(techoFile);
-        const items = this.extractTechoItemsForDate(techoContent, targetDate);
-        if (items.length === 0) {
-            new Notice(`${targetDate} の項目が手帳に見つかりませんでした`);
-            return;
-        }
-
-        const logContent = editor.getValue();
-        const rawHeader = this.settings.techoImportHeader || DEFAULT_SETTINGS.techoImportHeader;
-        const header = this.normalizeTechoHeader(rawHeader);
-        const mode = this.settings.techoImportMode || DEFAULT_SETTINGS.techoImportMode;
-        
-        const result = this.applyTechoImportToLog(logContent, header, items, mode);
-        
-        if (result.addedCount === 0) {
-            new Notice("既に取り込み済みです");
-        } else {
-            editor.setValue(result.content);
-            new Notice(`${result.addedCount} 件の項目をインポートしました`);
-        }
+        return this.techoService.importTechoToday(editor);
     }
 
     async importYesterdayCarryover(editor) {
