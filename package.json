@@ -10,7 +10,8 @@
     "test:task-line": "rm -rf .test-dist && esbuild src/core/task-line.ts --bundle --platform=node --format=cjs --outfile=.test-dist/task-line.cjs && node tests/task-line.test.cjs && rm -rf .test-dist",
     "test:techo": "rm -rf .test-dist && esbuild src/core/techo.ts --bundle --platform=node --format=cjs --outfile=.test-dist/techo.cjs && node tests/techo.test.cjs && rm -rf .test-dist",
     "test:history": "rm -rf .test-dist && esbuild src/core/history.ts --bundle --platform=node --format=cjs --outfile=.test-dist/history.cjs && node tests/history.test.cjs && rm -rf .test-dist",
-    "test": "npm run test:task-line && npm run test:techo && npm run test:history"
+    "test:history-suggest": "rm -rf .test-dist && esbuild src/services/history-suggest.ts --bundle --platform=node --format=cjs --outfile=.test-dist/history-suggest.cjs && node tests/history-suggest.test.cjs && rm -rf .test-dist",
+    "test": "npm run test:task-line && npm run test:techo && npm run test:history && npm run test:history-suggest"
   },
   "keywords": [],
   "author": "Matsuyama",

@@ -4,6 +4,8 @@ import { TaskChuteLineSettingTab } from './settings-tab';
 import { DailyNoteService } from './services/daily-note';
 import { TechoService } from './services/techo';
 import { HistoryService } from './services/history';
+import { HistorySuggestService } from './services/history-suggest';
+import { TaskHistorySuggestModal } from './ui/task-history-suggest-modal';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
@@ -125,6 +127,7 @@ class TaskLinerPlugin extends Plugin {
     dailyNoteService: DailyNoteService;
     techoService: TechoService;
     historyService: HistoryService;
+    historySuggestService: HistorySuggestService;
     statusBarEl: HTMLElement;
     topBarEl: HTMLElement;
     topBarLine1El: HTMLElement;
@@ -144,6 +147,7 @@ class TaskLinerPlugin extends Plugin {
         this.dailyNoteService = new DailyNoteService(this.app, () => this.settings);
         this.techoService = new TechoService(this.app, () => this.settings);
         this.historyService = new HistoryService(this.app, () => this.settings, () => this.saveSettings());
+        this.historySuggestService = new HistorySuggestService();
         this.addSettingTab(new TaskChuteLineSettingTab(this.app, this));
 
         try {
@@ -2060,39 +2064,11 @@ class TaskLinerPlugin extends Plugin {
     }
 
     _buildTaskLineFromHistoryEntry(entry, baseLineObj) {
-        const tl = new TaskLine();
-        tl.indent = baseLineObj ? baseLineObj.indent : "";
-        tl.bullet = baseLineObj ? baseLineObj.bullet : "- ";
-        tl.title = entry.title;
-        tl.estimate = entry.estimate || "";
-        return tl.toString();
+        return this.historySuggestService.buildTaskLineFromHistoryEntry(entry, baseLineObj);
     }
 
     _insertTaskLineBelow(editor, anchorIdx, lineText) {
-        const lineCount = editor.lineCount();
-        if (lineCount <= 0) {
-            editor.setValue(lineText);
-            editor.setCursor({ line: 0, ch: lineText.length });
-            return;
-        }
-
-        // Insert below the anchor. If anchor is the last line, append safely at EOF.
-        if (anchorIdx >= lineCount - 1) {
-            const lastIdx = lineCount - 1;
-            const lastText = editor.getLine(lastIdx);
-            if (lastText.length === 0) {
-                editor.replaceRange(lineText, { line: lastIdx, ch: 0 });
-                editor.setCursor({ line: lastIdx, ch: lineText.length });
-            } else {
-                editor.replaceRange(`\n${lineText}`, { line: lastIdx, ch: lastText.length });
-                editor.setCursor({ line: lastIdx + 1, ch: lineText.length });
-            }
-            return;
-        }
-
-        const insertAt = Math.max(0, anchorIdx + 1);
-        editor.replaceRange(`${lineText}\n`, { line: insertAt, ch: 0 });
-        editor.setCursor({ line: insertAt, ch: lineText.length });
+        return this.historySuggestService.insertTaskLineBelow(editor, anchorIdx, lineText);
     }
 
     async insertTaskFromHistorySuggest(editor) {
@@ -2483,98 +2459,7 @@ class RollRepeatModal extends Modal {
     }
 }
 
-class TaskHistorySuggestModal extends obsidian.FuzzySuggestModal {
-    constructor(app, entries, onSubmit) {
-        super(app);
-        this.entries = entries;
-        this.onSubmit = onSubmit;
-        this.submitted = false;
-        this.setPlaceholder("過去のタスク名を検索...");
-        this.setInstructions([
-            { command: "↑↓", purpose: "選択" },
-            { command: "Enter", purpose: "挿入" },
-            { command: "Esc", purpose: "キャンセル" }
-        ]);
-    }
 
-    getItems() {
-        const items = (this.entries || []).filter((item) => item && typeof item === "object" && String(item.title || "").trim().length > 0);
-        console.warn("[taskchute-line:suggest] modal:getItems", { count: items.length });
-        return items;
-    }
-
-    _toHistoryItem(item) {
-        // FuzzySuggestModal may pass a match object like { item, score, matches }.
-        if (item && typeof item === "object" && item.item) {
-            return this._toHistoryItem(item.item);
-        }
-        if (typeof item === "string") {
-            return {
-                title: item,
-                estimate: "",
-                count: 0,
-                lastUsedAt: ""
-            };
-        }
-        if (item && typeof item === "object") {
-            if (item.title || item.estimate || item.lastUsedAt || item.count !== undefined) {
-                return item;
-            }
-            // defensive fallback for unknown object shapes
-            const fallbackTitle = String(item.text || item.label || item.name || "").trim();
-            if (fallbackTitle) {
-                return {
-                    title: fallbackTitle,
-                    estimate: "",
-                    count: 0,
-                    lastUsedAt: ""
-                };
-            }
-            return item;
-        }
-        return {
-            title: "",
-            estimate: "",
-            count: 0,
-            lastUsedAt: ""
-        };
-    }
-
-    getItemText(item) {
-        const it = this._toHistoryItem(item);
-        const title = it.title || "(no title)";
-        return it.estimate ? `${title} （${it.estimate}m）` : title;
-    }
-
-    renderSuggestion(item, el) {
-        const it = this._toHistoryItem(item);
-        if (!it.title) {
-            console.warn("[taskchute-line:suggest] modal:render:empty-title", { raw: item });
-        }
-        const title = el.createDiv({ cls: "tc-history-title" });
-        title.setText(this.getItemText(it));
-        const meta = el.createEl("small", { cls: "tc-history-meta" });
-        meta.setText(`last: ${it.lastUsedAt || '-'} / count: ${it.count || 0}`);
-    }
-
-    onChooseItem(item, evt) {
-        this.submitted = true;
-        const chosen = this._toHistoryItem(item);
-        console.warn("[taskchute-line:suggest] modal:onChooseItem", chosen);
-        this.onSubmit(chosen);
-    }
-
-    onClose() {
-        console.warn("[taskchute-line:suggest] modal:onClose", { submitted: this.submitted });
-        // In Obsidian, onClose can fire before onChooseItem in some flows.
-        // Defer cancel handling to let onChooseItem mark `submitted` first.
-        setTimeout(() => {
-            if (!this.submitted) {
-                this.onSubmit(null);
-            }
-        }, 0);
-    }
-}
 
 
 const taskChuteStylePlugin = ViewPlugin.fromClass(class {
