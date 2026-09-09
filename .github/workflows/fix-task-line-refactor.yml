@@ -1,0 +1,48 @@
+name: Fix TaskLine refactor
+
+on:
+  push:
+    branches:
+      - refactor/task-line-core
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/task-line-core
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply fix
+        run: python scripts/fix_task_line_refactor.py
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run TaskLine regression tests
+        run: npm run test:task-line
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Clean temporary migration files
+        shell: bash
+        run: |
+          rm -f scripts/refactor_task_line.py scripts/fix_task_line_refactor.py .refactor-task-line-trigger .github/workflows/fix-task-line-refactor.yml
+
+      - name: Commit fixed refactor
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Extract TaskLine core with regression tests"
+          git push origin HEAD:refactor/task-line-core
