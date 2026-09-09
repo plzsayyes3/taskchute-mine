@@ -1,0 +1,42 @@
+name: Extract TaskLiner modals
+
+on:
+  push:
+    branches:
+      - refactor/extract-task-modals
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/extract-task-modals
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Extract modal classes
+        run: python scripts/extract_task_modals.py
+      - name: Install dependencies
+        run: npm install
+      - name: Regression tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build plugin
+        run: npm run build
+      - name: Clean temporary extraction files
+        run: |
+          rm -f scripts/extract_task_modals.py
+          rm -f .github/workflows/apply-modal-extraction.yml
+      - name: Commit modal extraction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Extract TaskLiner modal classes" || exit 0
+          git push
