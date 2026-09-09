@@ -1,35 +1,10 @@
 import { TaskLine, normalizeTimeStr, setLineKeepScroll, adjustTaskLineTime } from './core/task-line';
+import { DEFAULT_SETTINGS, TaskLinerSettings } from './settings';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
 import { ViewPlugin, Decoration, showPanel, EditorView } from '@codemirror/view';
 import { RangeSetBuilder, StateField, StateEffect } from '@codemirror/state';
-
-const DEFAULT_SETTINGS = {
-    logFolderPath: 'taskchute-line',
-    templateFolderPath: 'templates',
-    techoFolderPath: 'techo',
-    techoImportHeader: '## techoからインポート',
-    techoImportMode: 'append',
-    debugSuggestLogs: false,
-    mobileAutoOpenScroll: false,
-    enableDashboard: true,
-    enableStatusBar: true,
-    enableTopBar: true,
-    enableCheckboxClickHook: true,
-    dailyNoteFolderPath: '01_Daily',
-    selfTwitterHeader: '#### Self Twitter',
-    mobileTopBarOffset: 0,
-    mobileCustomIcon1: 'pencil',
-    mobileCustomCommand1: '',
-    mobileCustomIcon2: 'search',
-    mobileCustomCommand2: '',
-    taskHistoryIndex: {},
-    taskHistoryIndexUpdatedAt: '',
-    taskHistoryIndexVersion: 1,
-    rollFilePath: '11_notes/MT ROLL.md',
-    showTopBarNav: true
-};
 
 class TaskTextModal extends Modal {
     constructor(app, onSubmit) {
@@ -142,7 +117,7 @@ class DatePickerModal extends Modal {
 }
 
 class TaskLinerPlugin extends Plugin {
-    settings: any;
+    settings: TaskLinerSettings;
     statusBarEl: HTMLElement;
     topBarEl: HTMLElement;
     topBarLine1El: HTMLElement;
