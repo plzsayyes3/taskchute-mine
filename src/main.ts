@@ -3,6 +3,7 @@ import { DEFAULT_SETTINGS, TaskLinerSettings } from './settings';
 import { TaskChuteLineSettingTab } from './settings-tab';
 import { DailyNoteService } from './services/daily-note';
 import { TechoService } from './services/techo';
+import { HistoryService } from './services/history';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
@@ -123,6 +124,7 @@ class TaskLinerPlugin extends Plugin {
     settings: TaskLinerSettings;
     dailyNoteService: DailyNoteService;
     techoService: TechoService;
+    historyService: HistoryService;
     statusBarEl: HTMLElement;
     topBarEl: HTMLElement;
     topBarLine1El: HTMLElement;
@@ -141,6 +143,7 @@ class TaskLinerPlugin extends Plugin {
         await this.loadSettings();
         this.dailyNoteService = new DailyNoteService(this.app, () => this.settings);
         this.techoService = new TechoService(this.app, () => this.settings);
+        this.historyService = new HistoryService(this.app, () => this.settings, () => this.saveSettings());
         this.addSettingTab(new TaskChuteLineSettingTab(this.app, this));
 
         try {
@@ -2033,225 +2036,27 @@ class TaskLinerPlugin extends Plugin {
     }
 
     _normalizeTaskTitle(title) {
-        return String(title || "").replace(/\s+/g, " ").trim();
+        return this.historyService.normalizeTaskTitle(title);
     }
 
     _isInvalidSuggestTitle(title) {
-        const t = this._normalizeTaskTitle(title);
-        if (!t) return true;
-        if (/^\+\d+\s*m(?:in)?$/i.test(t)) return true;
-        if (/^(?:\d{1,2}:\d{2}|\d{3,4})?[-－ー](?:\d{1,2}:\d{2}|\d{3,4})?$/.test(t)) return true;
-        if (/^[-－ー]+$/.test(t)) return true;
-        return false;
+        return this.historyService.isInvalidSuggestTitle(title);
     }
 
     _upsertHistoryIndexEntry(index, lineObj, usedAt) {
-        const title = this._normalizeTaskTitle(lineObj.title);
-        if (!title) return;
-        const key = title.toLowerCase();
-        const prev = index[key];
-        const next = prev ? { ...prev } : {
-            title,
-            estimate: "",
-            count: 0,
-            lastUsedAt: ""
-        };
-
-        next.count += 1;
-
-        if (!next.lastUsedAt || (usedAt && usedAt > next.lastUsedAt)) {
-            next.lastUsedAt = usedAt;
-            next.title = title;
-            if (lineObj.estimate) {
-                next.estimate = lineObj.estimate;
-            }
-        } else if (!next.estimate && lineObj.estimate) {
-            next.estimate = lineObj.estimate;
-        }
-
-        index[key] = next;
+        return this.historyService.upsertHistoryIndexEntry(index, lineObj, usedAt);
     }
 
     async rebuildTaskHistoryIndex() {
-        const folderPath = this.settings.logFolderPath || DEFAULT_SETTINGS.logFolderPath;
-        const files = this.app.vault.getFiles().filter((f) => f.path.startsWith(folderPath + "/") && f.extension === "md");
-        const nextIndex = {};
-        let recordCount = 0;
-        let droppedNoTitle = 0;
-        let droppedPseudo = 0;
-        let usedParentFallback = 0;
-        const sampleAdded = [];
-        const sampleDropped = [];
-
-        this.debugSuggest("rebuild:start", { folderPath, fileCount: files.length });
-
-        for (const file of files) {
-            let content = "";
-            try {
-                content = await this.app.vault.read(file);
-            } catch (err) {
-                console.error("Failed to read log file for history index:", file?.path, err);
-                continue;
-            }
-            const dateMatch = file.basename.match(/^\d{4}-\d{2}-\d{2}$/);
-            const datePart = dateMatch ? dateMatch[0] : "0000-00-00";
-            const lines = String(content || "").split(/\r?\n/);
-            let currentParentTask = null;
-            let fileAdded = 0;
-            let fileDropped = 0;
-
-            for (const line of lines) {
-                const parsed = TaskLine.parse(line);
-                if (!parsed) {
-                    continue;
-                }
-
-                const isChild = parsed.indent.length > 0;
-                if (!isChild) {
-                    currentParentTask = parsed;
-                }
-
-                if (!this.isTaskExecutionRecord(parsed)) {
-                    continue;
-                }
-
-                const timePart = parsed.actualEnd || parsed.actualStart || parsed.skippedAt || "0000";
-                const usedAt = `${datePart} ${timePart}`;
-
-                // Legacy log format support:
-                // parent line = title/estimate, child line = actual time.
-                // In that case, index the parent task instead of the time-only child line.
-                let source = parsed;
-                if (isChild && currentParentTask && this._normalizeTaskTitle(currentParentTask.title)) {
-                    source = currentParentTask;
-                    usedParentFallback++;
-                }
-
-                const sourceTitle = this._normalizeTaskTitle(source.title);
-                if (!sourceTitle || this._isInvalidSuggestTitle(sourceTitle)) {
-                    droppedNoTitle++;
-                    fileDropped++;
-                    if (sampleDropped.length < 10) {
-                        sampleDropped.push({ file: file.path, line, reason: "invalid-title" });
-                    }
-                    continue;
-                }
-
-                recordCount++;
-                fileAdded++;
-                this._upsertHistoryIndexEntry(nextIndex, source, usedAt);
-                if (sampleAdded.length < 10) {
-                    sampleAdded.push({ usedAt, title: sourceTitle, file: file.path });
-                }
-            }
-
-            this.debugSuggest("rebuild:file", { file: file.path, lines: lines.length, added: fileAdded, dropped: fileDropped });
-        }
-
-        this.settings.taskHistoryIndex = nextIndex;
-        this.settings.taskHistoryIndexUpdatedAt = moment().format("YYYY-MM-DD HH:mm:ss");
-        this.settings.taskHistoryIndexVersion = DEFAULT_SETTINGS.taskHistoryIndexVersion;
-        await this.saveSettings();
-
-        this.debugSuggest("rebuild:done", {
-            uniqueCount: Object.keys(nextIndex).length,
-            recordCount,
-            droppedNoTitle,
-            droppedPseudo,
-            usedParentFallback,
-            sampleAdded,
-            sampleDropped
-        });
-
-        return {
-            fileCount: files.length,
-            recordCount,
-            uniqueCount: Object.keys(nextIndex).length
-        };
+        return this.historyService.rebuildTaskHistoryIndex();
     }
 
     async rebuildTaskSuggestIndexCommand() {
-        this.debugSuggestAlways("command:rebuild-index", {
-            debugSuggestLogs: !!this.settings?.debugSuggestLogs
-        });
-        const stats = await this.rebuildTaskHistoryIndex();
-        new Notice(`サジェスト索引を更新: ${stats.uniqueCount}件（記録${stats.recordCount}件 / ファイル${stats.fileCount}件）`);
+        return this.historyService.rebuildTaskSuggestIndexCommand();
     }
 
     _historyEntriesForSuggest() {
-        const raw = this.settings.taskHistoryIndex || {};
-        const normalized = [];
-        let dropped = 0;
-        const droppedSamples = [];
-
-        for (const [key, value] of Object.entries(raw)) {
-            // current schema: { title, estimate, count, lastUsedAt }
-            if (value && typeof value === "object" && !Array.isArray(value)) {
-                const title = this._normalizeTaskTitle(value.title || key);
-                if (!title || this._isInvalidSuggestTitle(title)) {
-                    dropped++;
-                    if (droppedSamples.length < 10) droppedSamples.push({ key, value });
-                    continue;
-                }
-                normalized.push({
-                    title,
-                    estimate: value.estimate ? String(value.estimate) : "",
-                    count: Number.isFinite(value.count) ? value.count : parseInt(value.count || "0", 10) || 0,
-                    lastUsedAt: value.lastUsedAt ? String(value.lastUsedAt) : ""
-                });
-                continue;
-            }
-
-            // legacy schema fallback: key=title, value=estimate or count
-            const fallbackTitle = this._normalizeTaskTitle(key);
-            if (!fallbackTitle || this._isInvalidSuggestTitle(fallbackTitle)) {
-                dropped++;
-                if (droppedSamples.length < 10) droppedSamples.push({ key, value });
-                continue;
-            }
-            normalized.push({
-                title: fallbackTitle,
-                estimate: typeof value === "string" && /^\d+$/.test(value) ? value : "",
-                count: typeof value === "number" ? value : 0,
-                lastUsedAt: ""
-            });
-        }
-
-        // Merge duplicates by title, keeping latest timestamp and non-empty estimate.
-        const dedup = {};
-        for (const item of normalized) {
-            const k = this._normalizeTaskTitle(item.title).toLowerCase();
-            const prev = dedup[k];
-            if (!prev) {
-                dedup[k] = { ...item };
-                continue;
-            }
-            prev.count = (prev.count || 0) + (item.count || 0);
-            if (!prev.estimate && item.estimate) prev.estimate = item.estimate;
-            if ((item.lastUsedAt || "") > (prev.lastUsedAt || "")) {
-                prev.lastUsedAt = item.lastUsedAt;
-                prev.title = item.title;
-                if (item.estimate) prev.estimate = item.estimate;
-            }
-        }
-        const merged = Object.values(dedup);
-        const invalidAfterMerge = merged.filter((x) => this._isInvalidSuggestTitle(x?.title)).length;
-
-        this.debugSuggest("suggest:entries:normalize", {
-            rawCount: Object.keys(raw).length,
-            normalizedCount: normalized.length,
-            mergedCount: merged.length,
-            invalidAfterMerge,
-            dropped,
-            droppedSamples
-        });
-
-        return merged.sort((a, b) => {
-            if ((b.lastUsedAt || "") !== (a.lastUsedAt || "")) {
-                return (b.lastUsedAt || "").localeCompare(a.lastUsedAt || "");
-            }
-            return (b.count || 0) - (a.count || 0);
-        });
+        return this.historyService.historyEntriesForSuggest();
     }
 
     _buildTaskLineFromHistoryEntry(entry, baseLineObj) {
