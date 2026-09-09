@@ -1,4 +1,4 @@
-import { TaskLine, normalizeTimeStr } from './core/task-line';
+import { TaskLine, normalizeTimeStr, setLineKeepScroll, adjustTaskLineTime } from './core/task-line';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';

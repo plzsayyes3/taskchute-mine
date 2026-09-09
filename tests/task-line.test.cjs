@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { TaskLine, normalizeTimeStr } = require('../.test-dist/task-line.cjs');
+const { TaskLine, normalizeTimeStr, adjustTaskLineTime } = require('../.test-dist/task-line.cjs');
 
 assert.equal(normalizeTimeStr('930'), '09:30');
 assert.equal(normalizeTimeStr('0930'), '09:30');
@@ -31,4 +31,7 @@ assert.equal(skipped.skippedAt, '2026');
 assert.equal(skipped.toString(), '- [<] Later [SKIP 2026]');
 
 assert.equal(TaskLine.parse('not a task'), null);
+assert.equal(adjustTaskLineTime('- [/] Write report 【09:30-】', 5), '- [/] Write report 【09:35-】');
+assert.equal(adjustTaskLineTime('- [x] Write report 【09:30-10:00 / 30m】', -5), '- [x] Write report 【09:30-09:55 / 30m】');
+
 console.log('TaskLine regression tests passed');
