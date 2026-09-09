@@ -15,6 +15,7 @@ block = block.replace(end_marker, 'export const taskChuteStyleExtension = [taskC
 out = Path('src/editor/task-chute-style-extension.ts')
 if out.exists():
     raise SystemExit('editor style module already exists')
+out.parent.mkdir(parents=True, exist_ok=True)
 out.write_text(
     "import { Decoration, ViewPlugin } from '@codemirror/view';\n"
     "import { RangeSetBuilder } from '@codemirror/state';\n"
