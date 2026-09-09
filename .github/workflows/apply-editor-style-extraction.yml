@@ -1,0 +1,42 @@
+name: Extract editor style extension
+
+on:
+  push:
+    branches:
+      - refactor/extract-editor-style
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/extract-editor-style
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Extract editor style extension
+        run: python scripts/extract_editor_style.py
+      - name: Install dependencies
+        run: npm install
+      - name: Regression tests
+        run: npm test
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build plugin
+        run: npm run build
+      - name: Clean temporary extraction files
+        run: |
+          rm -f scripts/extract_editor_style.py
+          rm -f .github/workflows/apply-editor-style-extraction.yml
+      - name: Commit editor style extraction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Extract CodeMirror task style extension" || exit 0
+          git push
