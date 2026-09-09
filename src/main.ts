@@ -11,6 +11,8 @@ import { registerTaskLinerCommands } from './commands/register-commands';
 import { registerCheckboxClickHook } from './lifecycle/register-checkbox-hook';
 import { registerTaskLinerUiRuntime } from './lifecycle/register-ui-runtime';
 import { buildDashboardPanelExtension } from './ui/dashboard-panel';
+import { TaskChuteCalendarView } from './ui/task-chute-calendar-view';
+import { TaskChuteScrollView } from './ui/task-chute-scroll-view';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
