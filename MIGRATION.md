@@ -42,6 +42,7 @@ The historical source and build configuration have now been restored exactly. Gi
 - [x] Add a GitHub Release workflow that publishes `main.js`, `manifest.json`, and `styles.css` from a matching `v*` tag.
 - [x] Keep `data.json` outside release artifacts and ignore it.
 - [x] Remove tracked `node_modules`, generated source maps, runtime `data.json`, and the stale checked-in `main.js`. Release bundles are now generated from canonical source.
+- [x] Synchronize the migration branch with the current `main` history.
 
 ## Remaining migration work
 
