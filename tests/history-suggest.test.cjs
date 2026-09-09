@@ -1,10 +1,9 @@
 const assert = require('node:assert/strict');
-const { TaskLine } = require('../.test-dist/history-suggest.cjs');
 const { HistorySuggestService } = require('../.test-dist/history-suggest.cjs');
 
 const service = new HistorySuggestService();
 
-const base = TaskLine.parse('  - [ ] Existing');
+const base = { indent: '  ', bullet: '- ' };
 const line = service.buildTaskLineFromHistoryEntry(
   { title: 'Past task', estimate: '25', count: 3, lastUsedAt: '2026-09-09 10:00' },
   base
