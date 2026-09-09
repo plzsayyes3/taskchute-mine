@@ -1,15 +1,24 @@
 {
-  "name": "obsidian-taskchute-mine",
-  "private": true,
+  "name": "taskliner",
+  "version": "0.1.1",
+  "description": "Manage tasks in a single line with HH:mm format.",
+  "main": "main.js",
   "scripts": {
-    "build": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=es2018 --outfile=main.js --external:obsidian --external:@codemirror/state --external:@codemirror/view --external:@codemirror/language --sourcemap --log-level=info",
-    "dev": "esbuild src/main.ts --bundle --platform=node --format=cjs --target=es2018 --outfile=main.js --external:obsidian --external:@codemirror/state --external:@codemirror/view --external:@codemirror/language --sourcemap --log-level=info --watch"
+    "dev": "node esbuild.config.mjs",
+    "build": "node esbuild.config.mjs production",
+    "typecheck": "tsc --noEmit --skipLibCheck"
   },
+  "keywords": [],
+  "author": "Matsuyama",
+  "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.11.30",
-    "esbuild": "^0.25.0",
-    "obsidian": "^1.5.8",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {}
+    "@types/node": "^16.11.6",
+    "@typescript-eslint/eslint-plugin": "^5.29.0",
+    "@typescript-eslint/parser": "^5.29.0",
+    "builtin-modules": "^3.3.0",
+    "esbuild": "0.19.4",
+    "obsidian": "latest",
+    "tslib": "2.4.0",
+    "typescript": "5.2.2"
+  }
 }

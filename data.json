@@ -1,8 +1,0 @@
-{
-  "logFolderPath": "09_taskchute",
-  "templateFolderPath": "09_taskchute/templates",
-  "enableTemplates": true,
-  "enableFocusMode": false,
-  "enableFilterMode": true,
-  "enableDim": true
-}

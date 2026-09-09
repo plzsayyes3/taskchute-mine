@@ -19,8 +19,17 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build
-        run: npm run build
+      - name: Bundle with historical build config
+        run: node esbuild.config.mjs production
+
+      - name: Verify canonical source blob
+        shell: bash
+        run: |
+          expected="97f9ec3d667f7cf8d12a8a92c4d6c33418e1f502"
+          actual="$(git hash-object src/main.ts)"
+          echo "expected=$expected"
+          echo "actual=$actual"
+          test "$actual" = "$expected"
 
       - name: Verify production artifact
         shell: bash

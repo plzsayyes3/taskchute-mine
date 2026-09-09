@@ -1,196 +1,606 @@
-/* Chute View (mobile-first) */
-.tc-chute {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 12px;
-  gap: 10px;
-  background: linear-gradient(180deg, #f7f7fb 0%, #ffffff 60%);
+.taskchute-line-running {
+    font-weight: bold;
 }
 
-.tc-chute-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.taskchute-line-done {
+    opacity: 0.5;
 }
 
-.tc-chute-title {
-  font-weight: 700;
-  font-size: 18px;
+/* Running task checkbox: keep markdown state as [/] and render play icon by CSS */
+.markdown-source-view.mod-cm6 .task-list-item-checkbox[data-task="/"] {
+    background-color: transparent !important;
+    background-image: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: 1px solid var(--checkbox-border-color) !important;
+    position: relative !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+    opacity: 1 !important;
 }
 
-.tc-chute-actions {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+.markdown-source-view.mod-cm6 .task-list-item-checkbox[data-task="/"]::after {
+    display: none !important;
+    content: none !important;
 }
 
-.tc-chute-actions button,
-.tc-chute-now button,
-.tc-chute-tasklist button {
-  padding: 6px 10px;
-  border-radius: 10px;
-  border: 1px solid #e3e6ef;
-  background: #fff;
-  font-size: 12px;
+.markdown-source-view.mod-cm6 .task-list-item-checkbox[data-task="/"]::before {
+    content: "▶" !important;
+    color: var(--interactive-accent) !important;
+    font-size: 10px !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 54% !important;
+    transform: translate(-50%, -50%) !important;
 }
 
-.tc-chute-ribbon {
-  border-radius: 14px;
-  border: 1px solid #e8eaf2;
-  background: #fff;
-  padding: 8px;
-  max-height: 28vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+/* Fallback selectors for mobile/editor variants where data-task is on line element */
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] .task-list-item-checkbox,
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] .task-list-item-checkbox,
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] input[type="checkbox"],
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] input[type="checkbox"] {
+    background-color: transparent !important;
+    background-image: none !important;
+    mask-image: none !important;
+    -webkit-mask-image: none !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    border: 1px solid var(--checkbox-border-color) !important;
+    position: relative !important;
+    display: inline-grid !important;
+    place-items: center !important;
+    overflow: visible !important;
+    opacity: 1 !important;
 }
 
-.tc-chute-ribbon-list {
-  overflow-y: auto;
-  display: grid;
-  gap: 6px;
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] .task-list-item-checkbox::after,
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] .task-list-item-checkbox::after,
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] input[type="checkbox"]::after,
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] input[type="checkbox"]::after {
+    display: none !important;
+    content: none !important;
 }
 
-.tc-chute-ribbon-row {
-  display: grid;
-  grid-template-columns: 60px 1fr;
-  gap: 8px;
-  align-items: center;
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] .task-list-item-checkbox::before,
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] .task-list-item-checkbox::before,
+.markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] input[type="checkbox"]::before,
+.markdown-source-view.mod-cm6 .cm-line[data-task="/"] input[type="checkbox"]::before {
+    content: "▶" !important;
+    color: var(--interactive-accent) !important;
+    font-size: 10px !important;
+    position: absolute !important;
+    top: 50% !important;
+    left: 54% !important;
+    transform: translate(-50%, -50%) !important;
 }
 
-.tc-chute-ribbon-row.is-done .tc-chute-ribbon-label {
-  color: #b0b4c4;
-  text-decoration: line-through;
+/* Mobile tuning: keep the same play icon appearance on touch UI */
+body.is-mobile .markdown-source-view.mod-cm6 .task-list-item-checkbox[data-task="/"] {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    border-width: 1.5px !important;
+    border-radius: 7px !important;
 }
 
-.tc-chute-ribbon-row.is-done .tc-chute-ribbon-time {
-  color: #c2c6d4;
+body.is-mobile .markdown-source-view.mod-cm6 .task-list-item-checkbox[data-task="/"]::before {
+    font-size: 12px !important;
+    top: 49% !important;
+    left: 52% !important;
 }
 
-.tc-chute-ribbon-row.is-next .tc-chute-ribbon-label,
-.tc-chute-ribbon-row.is-next .tc-chute-ribbon-time {
-  color: #c8cbd8;
+body.is-mobile .markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] .task-list-item-checkbox,
+body.is-mobile .markdown-source-view.mod-cm6 .cm-line[data-task="/"] .task-list-item-checkbox,
+body.is-mobile .markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] input[type="checkbox"],
+body.is-mobile .markdown-source-view.mod-cm6 .cm-line[data-task="/"] input[type="checkbox"] {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    border-width: 1.5px !important;
+    border-radius: 7px !important;
 }
 
-.tc-chute-ribbon-time {
-  font-variant-numeric: tabular-nums;
-  color: #7b8096;
-  font-size: 12px;
+body.is-mobile .markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] .task-list-item-checkbox::before,
+body.is-mobile .markdown-source-view.mod-cm6 .cm-line[data-task="/"] .task-list-item-checkbox::before,
+body.is-mobile .markdown-source-view.mod-cm6 .HyperMD-task-line[data-task="/"] input[type="checkbox"]::before,
+body.is-mobile .markdown-source-view.mod-cm6 .cm-line[data-task="/"] input[type="checkbox"]::before {
+    font-size: 12px !important;
+    top: 49% !important;
+    left: 52% !important;
 }
 
-.tc-chute-ribbon-label {
-  font-size: 13px;
-  color: #2f3446;
+/* ─── Dashboard Panel (Editor Top Bar) ─── */
+.tcl-dashboard {
+    padding: 6px 14px;
+    font-size: 0.82em;
+    line-height: 1.6;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background: var(--background-secondary);
+    font-family: var(--font-interface);
+    color: var(--text-muted);
+    user-select: none;
 }
 
-.tc-chute-now {
-  border-radius: 16px;
-  border: 1px solid #e8eaf2;
-  background: #ffffff;
-  padding: 12px;
-  display: grid;
-  gap: 8px;
+.tcl-dashboard-nav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding-bottom: 6px;
 }
 
-.tc-chute-now-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #8a8fa3;
+.tcl-nav-btn {
+    background-color: var(--interactive-normal);
+    border: none;
+    border-radius: 4px;
+    padding: 1px 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.1s;
+    color: var(--text-muted);
 }
 
-.tc-chute-now-text {
-  font-size: 16px;
-  font-weight: 700;
+.tcl-nav-btn:hover {
+    background-color: var(--interactive-hover);
+    color: var(--text-normal);
 }
 
-.tc-chute-memo {
-  width: 100%;
-  min-height: 60px;
-  border-radius: 10px;
-  border: 1px solid #e3e6ef;
-  padding: 8px;
-  font-size: 13px;
+.tcl-nav-today {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    font-weight: 600;
+    min-width: 120px;
 }
 
-.tc-chute-tasklist {
-  border-radius: 16px;
-  border: 1px solid #e8eaf2;
-  background: #ffffff;
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-  min-height: 0;
+.tcl-nav-today:hover {
+    background-color: var(--interactive-accent-hover);
+    color: var(--text-on-accent);
 }
 
-.tc-chute-tasklist-head {
-  font-size: 12px;
-  letter-spacing: 0.1em;
-  color: #8a8fa3;
+.tcl-dashboard-line1,
+.tcl-dashboard-line2 {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    flex-wrap: wrap;
+    min-height: 1.4em;
 }
 
-.tc-chute-tasklist-body {
-  overflow-y: auto;
-  display: grid;
-  gap: 8px;
+.tcl-d-sep {
+    color: var(--text-faint);
+    margin: 0 8px;
+    opacity: 0.4;
+    font-weight: 300;
 }
 
-.tc-chute-task {
-  border-radius: 12px;
-  border: 1px solid #edf0f7;
-  padding: 8px;
-  background: #fafbff;
+.tcl-d-time {
+    color: var(--text-normal);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
 }
 
-.tc-chute-task-title {
-  font-weight: 600;
-  font-size: 14px;
+.tcl-d-running {
+    color: var(--text-accent);
+    font-weight: 600;
 }
 
-.tc-chute-task-meta {
-  font-size: 11px;
-  color: #8a8fa3;
-  margin-top: 2px;
+.tcl-d-start {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
-/* Filter Mode (parent/child collapse) */
-/* Filter mode visual tone */
-.tc-parent.tc-done,
-.cm-line.tc-parent.tc-done {
-  opacity: 0.35;
+.tcl-d-idle {
+    color: var(--text-faint);
+    font-style: italic;
 }
 
-.tc-parent.tc-done.tc-expanded,
-.cm-line.tc-parent.tc-done.tc-expanded {
-  opacity: 0.75;
+.tcl-d-progress {
+    font-variant-numeric: tabular-nums;
 }
 
-.cm-line.tc-section.tc-done {
-  opacity: 0.35;
+.tcl-d-pct {
+    color: var(--text-faint);
+    font-size: 0.9em;
+    margin-left: 4px;
 }
 
-.tc-child.tc-hidden,
-.cm-line.tc-child.tc-hidden {
-  display: none !important;
+.tcl-d-remaining {
+    font-variant-numeric: tabular-nums;
 }
 
-.tc-collapse-toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 6px;
-  width: 18px;
-  height: 18px;
-  flex: 0 0 18px;
-  border-radius: 999px;
-  border: 1px solid #e0e4ef;
-  color: #8a8fa3;
-  font-size: 11px;
-  cursor: pointer;
-  background: #f6f7fb;
-  vertical-align: middle;
+.tcl-d-eta {
+    color: var(--text-accent);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
 }
+
+/* ─── Status Bar (Bottom) ─── */
+.tcl-statusbar {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.01em;
+}
+
+/* Mobile adjustments */
+.is-mobile .tcl-dashboard {
+    font-size: 0.78em;
+    padding: 4px 10px;
+}
+
+.is-mobile .tcl-dashboard-line2 {
+    display: none;
+}
+
+.tcl-topbar-expanded .tcl-topbar-line2,
+.tcl-dashboard-expanded .tcl-dashboard-line2 {
+    display: flex !important;
+}
+
+.tcl-dashboard {
+    position: relative;
+}
+
+.tcl-dashboard-toggle {
+    position: absolute;
+    right: 8px;
+    top: 4px;
+    width: 20px;
+    height: 20px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-modifier-border);
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.is-mobile .tcl-dashboard-toggle {
+    display: flex;
+}
+
+/* ─── Top Bar (Above Workspace, 2-line) ─── */
+.tcl-topbar {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 14px;
+    font-size: 0.76em;
+    font-family: var(--font-interface);
+    background: var(--background-secondary-alt, var(--background-secondary));
+    border-bottom: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    user-select: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    z-index: 15;
+    transition: background 0.15s ease;
+    line-height: 1.4;
+    width: 100%;
+    box-sizing: border-box;
+    height: auto;
+    position: relative;
+}
+
+.tcl-topbar-reload {
+    position: absolute;
+    right: 8px;
+    top: 6px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-faint);
+    transition: color 0.1s, transform 0.4s;
+    z-index: 25;
+}
+
+.tcl-topbar-reload:hover {
+    color: var(--text-normal);
+}
+
+.tcl-topbar-reload.is-spinning {
+    transform: rotate(360deg);
+}
+
+.is-mobile .tcl-topbar-reload {
+    right: 36px; /* Avoid overlapping the mobile toggle */
+}
+
+/* Force vertical stacking to fix note visibility */
+.app-container {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.workspace {
+    flex: 1 1 auto !important;
+    overflow: hidden;
+}
+
+.tcl-topbar:hover {
+    background: var(--background-modifier-hover);
+}
+
+.tcl-topbar-line1,
+.tcl-topbar-line2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    min-height: 20px;
+    width: 100%;
+}
+
+
+.tcl-tb-sep {
+    color: var(--text-faint);
+    opacity: 0.35;
+    font-weight: 300;
+}
+
+.tcl-tb-nav {
+    display: flex;
+    gap: 4px;
+    margin-right: 12px;
+    align-items: center;
+}
+
+.tcl-tb-nav-btn {
+    padding: 1px 6px;
+    background-color: var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+}
+
+.tcl-tb-nav-btn:hover {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.tcl-tb-nav-btn:active {
+    transform: scale(0.95);
+}
+
+#tcl-tb-today {
+    min-width: 40px;
+    text-align: center;
+}
+
+.tcl-tb-time {
+    color: var(--text-normal);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+}
+
+.tcl-tb-running {
+    color: var(--text-accent);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 280px;
+}
+
+.tcl-tb-idle {
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+.tcl-tb-block {
+    font-variant-numeric: tabular-nums;
+}
+
+.tcl-tb-remaining {
+    font-variant-numeric: tabular-nums;
+}
+
+.tcl-tb-noest {
+    color: var(--text-error, #e5534b);
+    font-weight: 700;
+    font-size: 0.95em;
+}
+
+.tcl-tb-weather {
+    font-variant-numeric: tabular-nums;
+}
+
+.tcl-tb-pressure {
+    font-variant-numeric: tabular-nums;
+    color: var(--text-muted);
+}
+
+.tcl-tb-pressure-low {
+    color: var(--text-error, #e5534b);
+    font-weight: 700;
+}
+
+/* Line 2 elements */
+.tcl-tb-note-stats {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.tcl-tb-daybar {
+    font-family: monospace;
+    font-size: 0.85em;
+    letter-spacing: -0.05em;
+    color: var(--text-accent);
+    opacity: 0.7;
+}
+
+.tcl-tb-daybar-label {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.9em;
+    color: var(--text-faint);
+}
+
+.tcl-tb-weekdots {
+    letter-spacing: 0.1em;
+    font-size: 0.85em;
+}
+
+.tcl-tb-weekday {
+    font-size: 0.9em;
+    color: var(--text-faint);
+}
+
+/* Mobile top bar: line2 hidden by default, shown when expanded */
+.is-mobile .tcl-topbar {
+    font-size: 0.72em;
+    padding: 2px 30px 2px 10px; /* Space for toggle */
+    position: relative;
+    min-height: 24px;
+}
+
+.is-mobile .tcl-topbar-line2 {
+    display: none;
+}
+
+.is-mobile .tcl-topbar-expanded .tcl-topbar-line2 {
+    display: flex;
+    flex-direction: column;
+    padding-top: 4px;
+    border-top: 1px solid var(--background-modifier-border);
+    margin-top: 2px;
+}
+
+.is-mobile .tcl-topbar-toggle {
+    position: absolute;
+    right: 8px;
+    top: 4px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background-modifier-border);
+    border-radius: 4px;
+    font-size: 10px;
+}
+
+.is-mobile .tcl-tb-running {
+    max-width: 60vw;
+}
+
+.tcl-tb-note-stats {
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: background 0.1s;
+}
+
+.tcl-tb-note-stats:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-accent);
+}
+
+/* ─── Redesigned 4-Row Mobile Layout ─── */
+.tcl-mobile-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    gap: 8px;
+    width: 100%;
+    align-items: center;
+}
+
+.tcl-mobile-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    min-height: 38px;
+}
+
+.tcl-mobile-col.left { text-align: left; }
+.tcl-mobile-col.right { text-align: right; }
+
+.tcl-red-text {
+    color: var(--text-error, #e5534b) !important;
+}
+
+/* Row 2: Progress Bar */
+.tcl-tb-daybar-container {
+    width: 100%;
+    height: 16px;
+    background: var(--background-modifier-border);
+    border-radius: 8px;
+    position: relative;
+    overflow: hidden;
+    margin: 2px 0;
+}
+
+.tcl-tb-daybar-fill {
+    height: 100%;
+    background: var(--interactive-accent);
+    transition: width 0.3s ease;
+}
+
+.tcl-tb-daybar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    text-align: center;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+/* Row 3: Buttons */
+.tcl-mobile-btn-row {
+    display: flex;
+    gap: 4px;
+    width: 100%;
+    padding: 1px 0;
+}
+
+.tcl-mobile-btn {
+    background: var(--background-secondary-alt);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 6px;
+    font-size: 0.8em;
+    font-weight: 500;
+    color: var(--text-normal);
+    cursor: pointer;
+    min-height: 24px;
+    flex: 1;
+    gap: 4px;
+}
+
+.tcl-mobile-btn:active {
+    background: var(--background-modifier-hover);
+}
+
+.tcl-mobile-btn span {
+    font-size: 1.25em;
+    line-height: 1;
+}
+
+.tcl-mobile-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Row 4: Stats Grid (already using tcl-mobile-grid-3 in JS) */
