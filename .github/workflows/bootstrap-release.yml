@@ -1,0 +1,52 @@
+name: Bootstrap TaskLiner Release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".release-trigger"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+
+      - name: Create version tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./manifest.json').version")"
+          echo "version=$version"
+
+          git fetch --tags --force
+          if git rev-parse "$version" >/dev/null 2>&1; then
+            echo "Tag $version already exists"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "$version"
+            git push origin "$version"
+          fi
+
+          if gh release view "$version" >/dev/null 2>&1; then
+            gh release upload "$version" main.js manifest.json styles.css --clobber
+          else
+            gh release create "$version" main.js manifest.json styles.css --generate-notes --title "$version" --target "$GITHUB_SHA"
+          fi
