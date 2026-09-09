@@ -21,26 +21,40 @@ Verified production artifacts on 2026-09-09:
 - `styles.css` — blob `043dbc70c178ae390c72d5548f2ca316d6250ac6`
 - `data.json` — runtime/user settings only; do not distribute
 
-The same production `main.js` blob exists in the historical TaskLiner development tree in `plzsayyes3/catch-all-notebook` at commit `bcb6a611c9612eb856ea0c1d92854d5a6b2d11aa`, together with `taskliner/src/main.ts` and the old build configuration. This is the recovery source for the TypeScript implementation corresponding to the current production bundle.
+Historical recovery source:
 
-The old `taskchute-mine` repository already contains a much newer `src/main.ts` than its checked-in `main.js`. Build parity is therefore verified before replacing source blindly. CI compares the built `main.js` Git blob hash with the production blob above.
+- repository: `plzsayyes3/catch-all-notebook`
+- commit: `bcb6a611c9612eb856ea0c1d92854d5a6b2d11aa`
+- source: `taskliner/src/main.ts`
+- source blob: `97f9ec3d667f7cf8d12a8a92c4d6c33418e1f502`
 
-## Migration order
+The historical source and build configuration have now been restored exactly. GitHub Actions confirms that bundling the recovered `src/main.ts` with the historical esbuild configuration generates the deployed production `main.js` blob exactly.
 
-1. Rename GitHub repository `taskchute-mine` to `taskliner`.
-2. Preserve the current production plugin ID `taskliner` so existing vault installations use the same folder/ID.
-3. Restore the production build configuration and verify whether the existing `src/main.ts` reproduces the production bundle.
-4. If parity fails, replace only the differing source with the historical TaskLiner source.
-5. Copy/restore the production `styles.css` and verify its blob hash.
-6. Refactor the monolithic source only after parity is established.
-7. Remove tracked `node_modules` and generated source maps from version control.
-8. Keep `data.json` out of release artifacts.
-9. Add a GitHub Release workflow that builds from source and attaches `main.js`, `manifest.json`, and `styles.css`.
-10. Publish a release whose tag matches `manifest.json` version, then install/update through BRAT.
+## Completed
 
-## Refactoring targets after parity
+- [x] Preserve plugin ID `taskliner`.
+- [x] Restore historical TaskLiner build configuration.
+- [x] Restore `src/main.ts` exactly; blob matches `97f9ec3d667f7cf8d12a8a92c4d6c33418e1f502`.
+- [x] Restore production `styles.css`; blob matches `043dbc70c178ae390c72d5548f2ca316d6250ac6`.
+- [x] Verify behavior-preserving build parity: generated `main.js` matches production blob `1845cebc52313c2217d3f703af4029c51959c456`.
+- [x] Separate the release build from legacy TypeScript type checking. `npm run build` uses esbuild; `npm run typecheck` is diagnostic only during typing modernization.
+- [x] Add `versions.json` for Obsidian compatibility metadata.
+- [x] Add a GitHub Release workflow that publishes `main.js`, `manifest.json`, and `styles.css` from a matching `v*` tag.
+- [x] Keep `data.json` outside release artifacts.
 
-The production source is currently large and mixes several responsibilities. Split it gradually into modules such as:
+## Remaining migration work
+
+1. Confirm and remove any tracked `node_modules` or generated source maps left from the old repository.
+2. Merge `taskliner-migration` into `main` after CI is green.
+3. Rename GitHub repository `taskchute-mine` to `taskliner`.
+4. Publish the first release with a tag matching `manifest.json` (`v0.1.1` for the migration baseline, unless the version is deliberately advanced first).
+5. Add `plzsayyes3/taskliner` to BRAT and verify installation/update on the actual vault.
+6. Retire the old development copy only after BRAT is confirmed working.
+7. Refactor the monolithic source only after the independent repository is proven in real use.
+
+## Refactoring targets after migration
+
+The recovered production source is large and mixes several responsibilities. Split it gradually into modules such as:
 
 - `src/core/task-line.ts` — parsing/serialization and time calculations
 - `src/commands/` — editor/task commands
@@ -52,4 +66,4 @@ The production source is currently large and mixes several responsibilities. Spl
 - `src/settings.ts` — settings schema and settings tab
 - `src/main.ts` — plugin lifecycle and registration only
 
-Do not refactor and migrate behavior at the same time. First reproduce the production build, then extract modules with behavior-preserving changes.
+Do not refactor and migrate behavior at the same time. The migration baseline must remain reproducible while modules are extracted in behavior-preserving steps.
