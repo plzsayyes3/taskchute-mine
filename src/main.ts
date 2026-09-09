@@ -5,7 +5,7 @@ import { DailyNoteService } from './services/daily-note';
 import { TechoService } from './services/techo';
 import { HistoryService } from './services/history';
 import { HistorySuggestService } from './services/history-suggest';
-import { TaskHistorySuggestModal } from './ui/task-history-suggest-modal';
+import { HistorySuggestController } from './services/history-suggest-controller';
 
 import * as obsidian from 'obsidian';
 import { Plugin, moment, Modal, Setting, Notice, PluginSettingTab, TFolder, setIcon, TFile, View, App } from 'obsidian';
@@ -128,6 +128,7 @@ class TaskLinerPlugin extends Plugin {
     techoService: TechoService;
     historyService: HistoryService;
     historySuggestService: HistorySuggestService;
+    historySuggestController: HistorySuggestController;
     statusBarEl: HTMLElement;
     topBarEl: HTMLElement;
     topBarLine1El: HTMLElement;
@@ -148,6 +149,16 @@ class TaskLinerPlugin extends Plugin {
         this.techoService = new TechoService(this.app, () => this.settings);
         this.historyService = new HistoryService(this.app, () => this.settings, () => this.saveSettings());
         this.historySuggestService = new HistorySuggestService();
+        this.historySuggestController = new HistorySuggestController({
+            app: this.app,
+            getSettings: () => this.settings,
+            historyService: this.historyService,
+            historySuggestService: this.historySuggestService,
+            findRunningTaskIndex: (editor) => this._findRunningTaskIndex(editor),
+            findLatestExecutedTaskIndex: (editor) => this._findLatestExecutedTaskIndex(editor),
+            debugSuggest: (...args) => this.debugSuggest(...args),
+            debugSuggestAlways: (...args) => this.debugSuggestAlways(...args),
+        });
         this.addSettingTab(new TaskChuteLineSettingTab(this.app, this));
 
         try {
@@ -2072,58 +2083,7 @@ class TaskLinerPlugin extends Plugin {
     }
 
     async insertTaskFromHistorySuggest(editor) {
-        this.debugSuggestAlways("command:insert-from-history", {
-            debugSuggestLogs: !!this.settings?.debugSuggestLogs
-        });
-        await this.rebuildTaskHistoryIndex();
-        const entries = this._historyEntriesForSuggest();
-        const sampleTitles = entries.slice(0, 20).map((x) => ({
-            title: x?.title,
-            estimate: x?.estimate || "",
-            count: x?.count || 0,
-            lastUsedAt: x?.lastUsedAt || ""
-        }));
-        this.debugSuggestAlways("suggest:open", {
-            entryCount: entries.length,
-            sampleEntries: sampleTitles
-        });
-        this.debugSuggestAlways("suggest:open:titles", sampleTitles.map((x, i) =>
-            `${i + 1}. ${x.title || "(empty)"} | est=${x.estimate || "-"} | count=${x.count || 0} | last=${x.lastUsedAt || "-"}`
-        ).join("\n"));
-        if (entries.length === 0) {
-            new Notice("過去の実行履歴が見つかりません");
-            return;
-        }
-
-        const selected = await new Promise((resolve) => {
-            const modal = new TaskHistorySuggestModal(this.app, entries, resolve);
-            modal.open();
-        });
-        this.debugSuggestAlways("suggest:selected:raw", selected);
-        if (!selected) return;
-        if (!selected.title) {
-            new Notice("無効な履歴エントリです。インデックスを再構築してください。");
-            this.debugSuggest("suggest:selected:invalid", selected);
-            return;
-        }
-
-        const runningIdx = this._findRunningTaskIndex(editor);
-        const latestIdx = this._findLatestExecutedTaskIndex(editor);
-        const anchorIdx = runningIdx !== -1 ? runningIdx : (latestIdx !== -1 ? latestIdx : editor.getCursor().line);
-        const anchorObj = anchorIdx >= 0 && anchorIdx < editor.lineCount()
-            ? TaskLine.parse(editor.getLine(anchorIdx))
-            : null;
-
-        const insertLineText = this._buildTaskLineFromHistoryEntry(selected, anchorObj);
-        this.debugSuggestAlways("suggest:insert", {
-            selected,
-            runningIdx,
-            latestIdx,
-            anchorIdx,
-            insertLineText
-        });
-        this._insertTaskLineBelow(editor, anchorIdx, insertLineText);
-        new Notice("過去タスクを挿入しました");
+        return this.historySuggestController.insertTaskFromHistorySuggest(editor);
     }
 
     duplicateActiveTaskToBelowRunning(editor) {
