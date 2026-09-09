@@ -1,0 +1,41 @@
+name: Apply dashboard UI service refactor
+
+on:
+  push:
+    branches:
+      - refactor/dashboard-ui-service
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refactor/dashboard-ui-service
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply guarded dashboard UI extraction
+        run: python scripts/extract_dashboard_ui_service.py
+      - name: Install dependencies
+        run: npm install
+      - name: Regression tests
+        run: npm test
+      - name: Build plugin
+        run: npm run build
+      - name: Clean temporary refactor files
+        if: success()
+        run: rm -f scripts/extract_dashboard_ui_service.py .github/workflows/apply-dashboard-ui-refactor.yml
+      - name: Commit dashboard UI service refactor
+        if: success()
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Extract dashboard and top bar service"
+          git push origin HEAD:refactor/dashboard-ui-service
