@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>TaskLiner / taskchute-line</title>
+<style>
+:root{color-scheme:light dark;--bg:#f5f5f2;--panel:#fff;--text:#20211f;--muted:#777a73;--line:#dedfd9;--accent:#2f5d50;--accent-soft:#e8f0ec;--danger:#a23d3d;--running:#fff6d7;--done:#f0f1ed;--deferred:#f4eef8;--shadow:0 10px 30px rgba(0,0,0,.06)}
+@media(prefers-color-scheme:dark){:root{--bg:#151714;--panel:#1d201c;--text:#eceee8;--muted:#a1a59c;--line:#343931;--accent:#8fc0ae;--accent-soft:#21372f;--danger:#ef9393;--running:#352f1d;--done:#252824;--deferred:#302838;--shadow:none}}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;line-height:1.45} button,input,textarea{font:inherit;color:inherit} button{cursor:pointer}
+.app{max-width:960px;margin:0 auto;padding:18px 14px 80px}.top{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--bg) 90%,transparent);backdrop-filter:blur(12px);padding:10px 0 14px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand h1{font-size:18px;margin:0;font-weight:750;letter-spacing:.02em}.brand small{color:var(--muted)}
+.nav{display:grid;grid-template-columns:44px 1fr 44px;gap:8px;margin-top:12px}.nav button,.toolbar button,.task-actions button,.status-btn{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 10px}.date-btn{font-weight:700}.today-mark{font-size:11px;color:var(--muted);margin-left:6px}
+.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;box-shadow:var(--shadow)}.stat b{display:block;font-size:18px}.stat span{font-size:11px;color:var(--muted)}
+.current{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-bottom:12px}.current .label{font-size:11px;color:var(--muted)}.current .title{font-weight:750;margin-top:3px}.current .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px;margin-top:3px}
+.add{display:grid;grid-template-columns:1fr 94px auto;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:12px;box-shadow:var(--shadow)}.add input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:9px;padding:9px 10px}.primary{border:none!important;background:var(--accent)!important;color:white!important;font-weight:700}.estimate{text-align:center}
+.tasks{display:flex;flex-direction:column;gap:8px}.task{display:grid;grid-template-columns:auto 1fr;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 12px;box-shadow:var(--shadow)}.task.running{background:var(--running)}.task.done{background:var(--done);opacity:.82}.task.deferred{background:var(--deferred)}
+.status-btn{align-self:start;min-width:45px;font-weight:800;font-variant-numeric:tabular-nums}.task-main{min-width:0}.task-title{width:100%;border:0;background:transparent;padding:2px 0;font-weight:650;outline:none}.task-meta{display:flex;gap:8px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin-top:5px;font-variant-numeric:tabular-nums}.task-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.task-actions button{padding:5px 8px;font-size:12px}.task-actions .danger{color:var(--danger)}
+.toolbar{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0}.toolbar button{font-size:12px}.empty{text-align:center;color:var(--muted);padding:42px 12px;border:1px dashed var(--line);border-radius:14px}.raw{margin-top:22px}.raw summary{cursor:pointer;color:var(--muted);font-size:13px}.raw textarea{width:100%;min-height:220px;margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:9px 14px;border-radius:99px;font-size:12px;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}
+@media(max-width:620px){.app{padding:10px 10px 70px}.summary{grid-template-columns:repeat(2,1fr)}.add{grid-template-columns:1fr 82px}.add .primary{grid-column:1/-1}.task{grid-template-columns:42px 1fr}.task-actions button{flex:1 1 auto}.brand small{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><h1>TaskLiner <small>/ taskchute-line</small></h1><small>standalone HTML</small></div>
+    <div class="nav"><button id="prevDay" aria-label="前日">◀</button><button id="dateBtn" class="date-btn"></button><button id="nextDay" aria-label="翌日">▶</button></div>
+  </div>
+
+  <section class="summary">
+    <div class="stat"><b id="doneCount">0/0</b><span>完了</span></div>
+    <div class="stat"><b id="progressPct">0%</b><span>進捗</span></div>
+    <div class="stat"><b id="recordedMin">0m</b><span>実績</span></div>
+    <div class="stat"><b id="remainingMin">0m</b><span>残り見積</span></div>
+  </section>
+
+  <section class="current">
+    <div class="label">実行中</div>
+    <div id="currentTitle" class="title">待機中</div>
+    <div id="currentTime" class="time">--:--</div>
+  </section>
+
+  <section class="add">
+    <input id="newTitle" type="text" placeholder="タスクを追加" autocomplete="off">
+    <input id="newEstimate" class="estimate" type="number" min="0" step="5" placeholder="見積 m">
+    <button id="addTask" class="primary">追加</button>
+  </section>
+
+  <div class="toolbar">
+    <button id="todayBtn">今日</button>
+    <button id="carryBtn">前日の未完了を持越</button>
+    <button id="copyMdBtn">Markdownをコピー</button>
+    <button id="downloadMdBtn">.md保存</button>
+    <button id="importMdBtn">下のMarkdownを取込</button>
+  </div>
+
+  <main id="tasks" class="tasks"></main>
+
+  <details class="raw">
+    <summary>Markdownを表示・編集</summary>
+    <textarea id="markdownBox" spellcheck="false"></textarea>
+  </details>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+(() => {
+  'use strict';
+  const STORAGE_PREFIX = 'taskliner_taskchute_line_v1:';
+  const $ = id => document.getElementById(id);
+  let activeDate = todayStr();
+  let tasks = [];
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+  function shiftDate(dateStr, delta){ const [y,m,d]=dateStr.split('-').map(Number); const dt=new Date(y,m-1,d,12); dt.setDate(dt.getDate()+delta); return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`; }
+  function nowTime(){ const d=new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+  function minutesOf(t){ if(!/^\d{1,2}:\d{2}$/.test(t||'')) return null; const [h,m]=t.split(':').map(Number); return h*60+m; }
+  function elapsed(start,end){ const a=minutesOf(start),b=minutesOf(end); if(a===null||b===null)return 0; let n=b-a; if(n<0)n+=1440; return n; }
+  function uid(){ return `${Date.now().toString(36)}${Math.random().toString(36).slice(2,8)}`; }
+  function stateOf(t){ if(t.deferred) return 'deferred'; if(t.start && t.end) return 'done'; if(t.start) return 'running'; return 'todo'; }
+
+  function normalizeTask(t={}){
+    return {id:t.id||uid(),title:String(t.title||'').trim(),estimate:Number(t.estimate)||0,start:t.start||'',end:t.end||'',actualMin:Number(t.actualMin)||0,deferred:!!t.deferred,skipDate:t.skipDate||''};
+  }
+
+  function load(){
+    try{ tasks=(JSON.parse(localStorage.getItem(STORAGE_PREFIX+activeDate)||'[]')||[]).map(normalizeTask); }
+    catch{ tasks=[]; }
+    render();
+  }
+  function save(){ localStorage.setItem(STORAGE_PREFIX+activeDate,JSON.stringify(tasks)); render(); }
+  function toast(msg){ const el=$('toast'); el.textContent=msg; el.classList.add('show'); clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),1600); }
+
+  function taskToMarkdown(t){
+    const s=stateOf(t); const mark=s==='done'?'x':s==='running'?'/':s==='deferred'?'>':' ';
+    let line=`- [${mark}] ${t.title}`;
+    if(t.estimate>0) line+=` ⏳${t.estimate}m`;
+    if(t.start||t.end){ const dur=t.actualMin || (t.start&&t.end?elapsed(t.start,t.end):0); line+=` 【${t.start||''}-${t.end||''}${dur?` / ${dur}m`:''}】`; }
+    if(t.skipDate) line+=` [SKIP ${t.skipDate}]`;
+    return line;
+  }
+  function exportMarkdown(){ return tasks.map(taskToMarkdown).join('\n'); }
+
+  function parseMarkdown(text){
+    const result=[];
+    for(const raw of String(text||'').split(/\r?\n/)){
+      const m=raw.match(/^\s*[-*+]\s+\[([^\]])\]\s+(.*)$/); if(!m) continue;
+      let body=m[2].trim(); const mark=m[1];
+      let skipDate=''; const sm=body.match(/\s*\[SKIP(?:\s+(\d{4}-\d{2}-\d{2}|\d{4}))?\]\s*$/i); if(sm){skipDate=sm[1]||'';body=body.slice(0,sm.index).trim();}
+      let start='',end='',actualMin=0; const tm=body.match(/\s*【\s*(\d{1,2}:\d{2})?\s*[-－ー]\s*(\d{1,2}:\d{2})?\s*(?:\/\s*(\d+)m)?\s*】\s*$/); if(tm){start=tm[1]||'';end=tm[2]||'';actualMin=Number(tm[3])||0;body=body.slice(0,tm.index).trim();}
+      let estimate=0; const em=body.match(/\s+⏳\s*(\d+)m\s*$/); if(em){estimate=Number(em[1])||0;body=body.slice(0,em.index).trim();}
+      const deferred=mark==='>'||mark==='<';
+      if(mark.toLowerCase()==='x' && !end){ /* completed checkbox without time remains completed-like */ start=start||'00:00'; end=end||'00:00'; }
+      result.push(normalizeTask({title:body,estimate,start,end,actualMin,deferred,skipDate}));
+    }
+    return result;
+  }
+
+  function endRunning(at){
+    for(const t of tasks){ if(stateOf(t)==='running'){ t.end=at; t.actualMin=elapsed(t.start,t.end); } }
+  }
+  function latestEnd(){ let latest=''; for(const t of tasks){ if(t.end && (!latest || minutesOf(t.end)>minutesOf(latest))) latest=t.end; } return latest; }
+  function startTask(id,usePrevious=false){ const t=tasks.find(x=>x.id===id); if(!t||stateOf(t)==='done')return; const at=(usePrevious&&latestEnd())||nowTime(); endRunning(at); t.deferred=false;t.skipDate='';t.start=at;t.end='';t.actualMin=0;save(); }
+  function endTask(id){ const t=tasks.find(x=>x.id===id); if(!t||stateOf(t)!=='running')return; t.end=nowTime();t.actualMin=elapsed(t.start,t.end);save(); }
+  function resetTask(id){ const t=tasks.find(x=>x.id===id); if(!t)return; t.start='';t.end='';t.actualMin=0;t.deferred=false;t.skipDate='';save(); }
+  function deferTask(id){ const t=tasks.find(x=>x.id===id); if(!t)return; t.start='';t.end='';t.actualMin=0;t.deferred=!t.deferred;t.skipDate='';save(); }
+  function deleteTask(id){ tasks=tasks.filter(t=>t.id!==id);save(); }
+  function moveTask(id,delta){ const i=tasks.findIndex(t=>t.id===id); const j=i+delta; if(i<0||j<0||j>=tasks.length)return; [tasks[i],tasks[j]]=[tasks[j],tasks[i]];save(); }
+  function moveTomorrow(id){ const i=tasks.findIndex(t=>t.id===id); if(i<0)return; const target=shiftDate(activeDate,1); const moved=normalizeTask({...tasks[i],id:uid(),start:'',end:'',actualMin:0,deferred:false,skipDate:''}); let targetTasks=[]; try{targetTasks=JSON.parse(localStorage.getItem(STORAGE_PREFIX+target)||'[]')||[];}catch{} targetTasks.push(moved); localStorage.setItem(STORAGE_PREFIX+target,JSON.stringify(targetTasks)); tasks.splice(i,1); save(); toast(`${target} へ移動しました`); }
+
+  function statusLabel(t){ const s=stateOf(t); return s==='running'?'[/]':s==='done'?'[x]':s==='deferred'?'[>]':'[ ]'; }
+  function render(){
+    $('dateBtn').innerHTML=`${activeDate}${activeDate===todayStr()?'<span class="today-mark">TODAY</span>':''}`;
+    const root=$('tasks'); root.innerHTML='';
+    if(!tasks.length){ root.innerHTML='<div class="empty">タスクはありません。上から追加するか、Markdownを取り込めます。</div>'; }
+    tasks.forEach((t,index)=>{
+      const s=stateOf(t); const row=document.createElement('article'); row.className=`task ${s}`;
+      const status=document.createElement('button'); status.className='status-btn'; status.textContent=statusLabel(t); status.title='状態を切り替え'; status.onclick=()=>{ if(s==='todo')startTask(t.id); else if(s==='running')endTask(t.id); else if(s==='done')deferTask(t.id); else resetTask(t.id); };
+      const main=document.createElement('div'); main.className='task-main';
+      const title=document.createElement('input'); title.className='task-title'; title.value=t.title; title.onchange=()=>{t.title=title.value.trim();save();};
+      const meta=document.createElement('div'); meta.className='task-meta';
+      if(t.estimate) meta.append(span(`見積 ${t.estimate}m`));
+      if(t.start) meta.append(span(`開始 ${t.start}`));
+      if(t.end) meta.append(span(`終了 ${t.end}`));
+      if(t.start&&t.end) meta.append(span(`実績 ${t.actualMin||elapsed(t.start,t.end)}m`));
+      if(t.deferred) meta.append(span('保留'));
+      const actions=document.createElement('div'); actions.className='task-actions';
+      if(s==='todo'||s==='deferred'){actions.append(btn('開始',()=>startTask(t.id)),btn('前回終了から',()=>startTask(t.id,true)));}
+      if(s==='running') actions.append(btn('終了',()=>endTask(t.id)));
+      if(s!=='todo') actions.append(btn('リセット',()=>resetTask(t.id)));
+      actions.append(btn(t.deferred?'保留解除':'保留',()=>deferTask(t.id)),btn('↑',()=>moveTask(t.id,-1),index===0),btn('↓',()=>moveTask(t.id,1),index===tasks.length-1),btn('翌日',()=>moveTomorrow(t.id)),btn('削除',()=>deleteTask(t.id),false,'danger'));
+      main.append(title,meta,actions); row.append(status,main); root.append(row);
+    });
+    const done=tasks.filter(t=>stateOf(t)==='done').length; const total=tasks.length; const recorded=tasks.filter(t=>t.start&&t.end).reduce((a,t)=>a+(t.actualMin||elapsed(t.start,t.end)),0); const remain=tasks.filter(t=>stateOf(t)!=='done'&&stateOf(t)!=='deferred').reduce((a,t)=>a+(Number(t.estimate)||0),0); const running=tasks.find(t=>stateOf(t)==='running');
+    $('doneCount').textContent=`${done}/${total}`; $('progressPct').textContent=total?`${Math.round(done/total*100)}%`:'0%'; $('recordedMin').textContent=`${recorded}m`; $('remainingMin').textContent=`${remain}m`; $('currentTitle').textContent=running?running.title:'待機中'; $('currentTime').textContent=running?`${running.start} → 実行中`:'--:--'; $('markdownBox').value=exportMarkdown();
+  }
+  function span(text){ const e=document.createElement('span'); e.textContent=text; return e; }
+  function btn(text,fn,disabled=false,cls=''){ const b=document.createElement('button'); b.textContent=text;b.onclick=fn;b.disabled=disabled;if(cls)b.classList.add(cls);return b; }
+  function addNew(){ const title=$('newTitle').value.trim(); if(!title)return; tasks.push(normalizeTask({title,estimate:Number($('newEstimate').value)||0})); $('newTitle').value='';$('newEstimate').value='';save();$('newTitle').focus(); }
+
+  $('addTask').onclick=addNew; $('newTitle').addEventListener('keydown',e=>{if(e.key==='Enter')addNew();});
+  $('prevDay').onclick=()=>{activeDate=shiftDate(activeDate,-1);load();}; $('nextDay').onclick=()=>{activeDate=shiftDate(activeDate,1);load();}; $('todayBtn').onclick=()=>{activeDate=todayStr();load();}; $('dateBtn').onclick=()=>{const v=prompt('日付を YYYY-MM-DD で入力',activeDate);if(/^\d{4}-\d{2}-\d{2}$/.test(v||'')){activeDate=v;load();}};
+  $('carryBtn').onclick=()=>{ const prev=shiftDate(activeDate,-1); let prevTasks=[]; try{prevTasks=JSON.parse(localStorage.getItem(STORAGE_PREFIX+prev)||'[]')||[];}catch{} const carry=prevTasks.map(normalizeTask).filter(t=>stateOf(t)!=='done').map(t=>normalizeTask({...t,id:uid(),start:'',end:'',actualMin:0,deferred:false,skipDate:''})); if(!carry.length){toast('持ち越すタスクはありません');return;} tasks.push(...carry);save();toast(`${carry.length}件を持ち越しました`); };
+  $('copyMdBtn').onclick=async()=>{ const text=exportMarkdown(); try{await navigator.clipboard.writeText(text);toast('Markdownをコピーしました');}catch{ $('markdownBox').value=text;$('markdownBox').select();document.execCommand('copy');toast('Markdownをコピーしました'); } };
+  $('downloadMdBtn').onclick=()=>{const blob=new Blob([exportMarkdown()+'\n'],{type:'text/markdown;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`${activeDate}.md`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+  $('importMdBtn').onclick=()=>{const parsed=parseMarkdown($('markdownBox').value);if(!parsed.length){toast('取り込めるタスク行がありません');return;} if(tasks.length&&!confirm('現在日のタスクをMarkdown内容で置き換えますか？'))return; tasks=parsed;save();toast(`${parsed.length}件を取り込みました`);};
+  $('markdownBox').addEventListener('input',()=>{});
+
+  setInterval(()=>{ const running=tasks.find(t=>stateOf(t)==='running'); if(running) $('currentTime').textContent=`${running.start} → ${nowTime()}`; },30000);
+  load();
+})();
+</script>
+</body>
+</html>
